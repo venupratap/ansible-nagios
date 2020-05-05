@@ -1,0 +1,61 @@
+- hosts: node
+  become: true
+  tasks:
+  - name: installing dependencies
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+    - gcc
+    - glibc
+    - glibc-common
+    - gd
+    - gd-devel
+    - make
+    - net-snmp
+    - libselinux-python
+    - unzip
+    - httpd
+  - name: adding group
+    group:
+      name: nagios
+      state: present
+  - name: adding user
+    user:
+      name: nagios
+      state: present
+      group: nagios
+  - name: downloading nagios plugin
+    unarchive:
+      src: "{{ item }}"
+      dest: /usr/src/
+      remote_src: yes
+    with_items:
+    - https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.2.tar.gz
+    - https://github.com/nagios-plugins/nagios-plugins/archive/release-2.2.1.tar.gz
+  - name: configure
+    command: "./configure  --with-command-group=nagios  chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: make
+    command: "make all chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: make install
+    command: "make install chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: make install-init
+    command: "make install-init chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: make install-commandmode
+    command: "make install-commandmode chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: make install-config
+    command: "make install-config chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: make install-webconf
+    command: "make install-webconf chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: make install-daemoninit
+    command: "make install-daemoninit chdir=/usr/src/nagioscore-nagios-4.4.2"
+  - name: startservice
+    service:
+      name: httpd
+      state: started
+  - name: start nagios service
+    service:
+      name: nagios
+      state: started
+
+
